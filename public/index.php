@@ -2,27 +2,50 @@
 set_include_path(dirname(__DIR__));
 require 'vendor/autoload.php';
 
+use Psr\Http\Message\ServerRequestInterface;
 use Zend\Diactoros\ServerRequestFactory;
+use Zend\Diactoros\Response\HtmlResponse;
 use Zend\Diactoros\Response\JsonResponse;
-// use Psr\Http\Message\ServerRequestInterface as Request;
-// use Zend\Diactoros\Response\HtmlResponse;
 
 
-### Get Request ###
+### Initialization ###
 $request = ServerRequestFactory::fromGlobals();
 
+### Processing ###
 
 
 ### Action ###
-$name = $request->getQueryParams()['name'] ?? 'Guest';
-$body = 'Hello: ' . $name;
-// echo $body;
+$path = $request->getUri()->getPath();
+$action = null;
 
-$response = (new JsonResponse($body))
-    ->withHeader('Hello', 'Test')
-    ->withStatus(299);
+if ($path == '/') {
+    $action = function (ServerRequestInterface $request) {
+        $name = $request->getQueryParams()['name'] ?? 'Guest';
+        return new HtmlResponse('Hello: ' . $name);
+    };
+}
+else if ($path === '/about') {
+    $action = function () {
+        return new HtmlResponse('About');
+    };
+}
+else if (preg_match('#^/about/(?P<id>\d+)$#i', $path, $matches)) {
+    $request = $request->withAttribute('id', $matches['id']);
+    $action = function ($request) {
+        return new HtmlResponse($request->getAttribute('id'));
+    };
+}
 
+if ($action) {
+    $response = $action($request);
+} else {
+    $response = new HtmlResponse('Not found', 404);
+}
 
+### Postprocessing ###
+$response = $response->withHeader('PSR-7', 'MVC');
+$response = $response->withHeader('Access-Control-Allow-Origin', '*');
+// $response = $response->withStatus(209);
 
 ### Send Response ###
 if ($response) {
