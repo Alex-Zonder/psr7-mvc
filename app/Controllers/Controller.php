@@ -1,16 +1,13 @@
 <?php
 namespace Controllers;
 
-use Zend\Diactoros\Response\HtmlResponse;
-use Zend\Diactoros\Response\JsonResponse;
-
 use Exception;
 class RsponseReturnException extends Exception
 {
     public $response;
     public function __construct($response)
     {
-        parent::__construct('Response');
+        parent::__construct();
         $this->response = $response;
     }
 }
@@ -19,12 +16,8 @@ abstract class Controller
 {
     public function return($body, int $code = 200, bool $json = true)
     {
-        if ($json) {
-            $response = new JsonResponse($body, $code);
-        } else {
-            $response = new HtmlResponse($body, $code);
-        }
+        $class = '\\Zend\\Diactoros\\Response\\' . ($json ? 'JsonResponse' : 'HtmlResponse');
 
-        throw new RsponseReturnException($response);
+        throw new RsponseReturnException(new $class($body, $code));
     }
 }
