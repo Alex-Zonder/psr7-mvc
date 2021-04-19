@@ -2,7 +2,6 @@
 namespace Controllers;
 
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\ResponseInterface;
 use Zend\Diactoros\Response\HtmlResponse;
 use Zend\Diactoros\Response\JsonResponse;
 
@@ -12,7 +11,11 @@ class MainController extends Controller
     {
         $name = $request->getQueryParams()['name'] ?? 'Guest';
 
-        // return new HtmlResponse('Hello: ' . $name);
-        $this->return('Hello: ' . $name, 200, false);
+        return new HtmlResponse('Hello: ' . $name);
+    }
+
+    public function aboutAction()
+    {
+        $this->return('About', 200, false);
     }
 }

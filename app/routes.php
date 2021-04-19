@@ -3,6 +3,7 @@ use Zend\Diactoros\Response;
 use Zend\Diactoros\Response\HtmlResponse;
 
 $map->get('index', '/', ['\Controllers\MainController', 'indexAction']);
+$map->get('about', '/about', ['\Controllers\MainController', 'aboutAction']);
 
 $map->get('test', '/test', function ($request) { return new HtmlResponse('test', 403); });
 
