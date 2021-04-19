@@ -1,45 +1,53 @@
 <?php
+// set up composer autoloader
 set_include_path(dirname(__DIR__));
 require 'vendor/autoload.php';
 
-use Psr\Http\Message\ServerRequestInterface;
-use Zend\Diactoros\ServerRequestFactory;
-use Zend\Diactoros\Response\HtmlResponse;
-use Zend\Diactoros\Response\JsonResponse;
+// create a server request object
+$request = Zend\Diactoros\ServerRequestFactory::fromGlobals(
+    $_SERVER,
+    $_GET,
+    $_POST,
+    $_COOKIE,
+    $_FILES
+);
 
+// create the router container and get the routing map
+$routerContainer = new Aura\Router\RouterContainer();
+$map = $routerContainer->getMap();
 
-### Initialization ###
-$request = ServerRequestFactory::fromGlobals();
+// add a route to the map, and a handler for it
+require 'app/routes.php';
 
-### Processing ###
+// get the route matcher from the container ...
+$matcher = $routerContainer->getMatcher();
 
-
-### Action ###
-$path = $request->getUri()->getPath();
-$action = null;
-
-if ($path == '/') {
-    $action = function (ServerRequestInterface $request) {
-        $name = $request->getQueryParams()['name'] ?? 'Guest';
-        return new HtmlResponse('Hello: ' . $name);
-    };
-}
-else if ($path === '/about') {
-    $action = function () {
-        return new HtmlResponse('About');
-    };
-}
-else if (preg_match('#^/about/(?P<id>\d+)$#i', $path, $matches)) {
-    $request = $request->withAttribute('id', $matches['id']);
-    $action = function ($request) {
-        return new HtmlResponse($request->getAttribute('id'));
-    };
+// .. and try to match the request to a route.
+$route = $matcher->match($request);
+if (! $route) {
+    echo "No route found for the request.";
+    exit;
 }
 
-if ($action) {
-    $response = $action($request);
+// add route attributes to the request
+foreach ($route->attributes as $key => $val) {
+    $request = $request->withAttribute($key, $val);
+}
+
+// dispatch the request to the route handler.
+// (consider using https://github.com/auraphp/Aura.Dispatcher
+// in place of the one callable below.)
+if (is_array($route->handler)) {
+    $class = $route->handler[0];
+    $method = $route->handler[1];
+    try {
+        $response = (new $class())->$method($request);
+    } catch(\Controllers\RsponseReturnException $e) {
+        $response = $e->response;
+    }
 } else {
-    $response = new HtmlResponse('Not found', 404);
+    $callable = $route->handler;
+    $response = $callable($request);
 }
 
 ### Postprocessing ###
@@ -47,12 +55,11 @@ $response = $response->withHeader('PSR-7', 'MVC');
 $response = $response->withHeader('Access-Control-Allow-Origin', '*');
 // $response = $response->withStatus(209);
 
-### Send Response ###
-if ($response) {
-    header("HTTP/1.0 {$response->getStatusCode()} {$response->getReasonPhrase()}");
-    foreach ($response->getHeaders() as $name => $values) {
-        header($name . ':' . implode(', ', $values));
+// emit the response
+foreach ($response->getHeaders() as $name => $values) {
+    foreach ($values as $value) {
+        header(sprintf('%s: %s', $name, $value), false);
     }
-    echo $response->getBody();
 }
-?>
+http_response_code($response->getStatusCode());
+echo $response->getBody();
