@@ -16,6 +16,6 @@ class MainController extends Controller
 
     public function aboutAction()
     {
-        $this->return('About', 200, false);
+        $this->return('About: ' . $this->request['method'], 200, false);
     }
 }

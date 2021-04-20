@@ -14,8 +14,8 @@ class RsponseReturnException extends \Exception
     public $response;
     public function __construct($response)
     {
-        parent::__construct();
         $this->response = $response;
+        parent::__construct();
     }
 }
 
@@ -44,6 +44,20 @@ abstract class Controller
             $callable = $handler;
             return $callable($request);
         }
+    }
+
+    /**
+     * @deprecated
+     */
+    public $request;
+    public function __construct()
+    {
+        $this->request = [
+            'params' => $_REQUEST,
+            'uri' => explode('?', trim($_SERVER['REQUEST_URI'], '?'))[0],
+            'method' => $this->method = $_SERVER['REQUEST_METHOD'],
+            'body' => json_decode(file_get_contents('php://input'), true),
+        ];
     }
 
     /**
