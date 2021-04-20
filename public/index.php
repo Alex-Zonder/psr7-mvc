@@ -37,18 +37,7 @@ foreach ($route->attributes as $key => $val) {
 // dispatch the request to the route handler.
 // (consider using https://github.com/auraphp/Aura.Dispatcher
 // in place of the one callable below.)
-if (is_array($route->handler)) {
-    $class = $route->handler[0];
-    $method = $route->handler[1];
-    try {
-        $response = (new $class())->$method($request);
-    } catch(\Controllers\RsponseReturnException $e) {
-        $response = $e->response;
-    }
-} else {
-    $callable = $route->handler;
-    $response = $callable($request);
-}
+$response = Controllers\Controller::dispatch($request, $route->handler);
 
 ### Postprocessing ###
 $response = $response->withHeader('PSR-7', 'MVC');
