@@ -1,16 +1,9 @@
 <?php
-// set up composer autoloader
 set_include_path(dirname(__DIR__));
 require 'vendor/autoload.php';
 
-// create a server request object
-$request = Zend\Diactoros\ServerRequestFactory::fromGlobals(
-    $_SERVER,
-    $_GET,
-    $_POST,
-    $_COOKIE,
-    $_FILES
-);
+
+### Initialization ###
 
 // create the router container and get the routing map
 $routerContainer = new Aura\Router\RouterContainer();
@@ -19,10 +12,11 @@ $map = $routerContainer->getMap();
 // add a route to the map, and a handler for it
 require 'app/routes.php';
 
-// get the route matcher from the container ...
-$matcher = $routerContainer->getMatcher();
 
-// .. and try to match the request to a route.
+### Running ###
+$request = Zend\Diactoros\ServerRequestFactory::fromGlobals();
+
+$matcher = $routerContainer->getMatcher();
 $route = $matcher->match($request);
 if (! $route) {
     echo "No route found for the request.";
@@ -39,12 +33,14 @@ foreach ($route->attributes as $key => $val) {
 // in place of the one callable below.)
 $response = Controllers\Controller::dispatch($request, $route->handler);
 
+
 ### Postprocessing ###
 $response = $response->withHeader('PSR-7', 'MVC');
 $response = $response->withHeader('Access-Control-Allow-Origin', '*');
 // $response = $response->withStatus(209);
 
-// emit the response
+
+### Emit the response ###
 foreach ($response->getHeaders() as $name => $values) {
     foreach ($values as $value) {
         header(sprintf('%s: %s', $name, $value), false);

@@ -8,6 +8,7 @@ use Zend\Diactoros\Response\JsonResponse;
 
 /**
  * Исключение для возврата $response из устаревшего $this->return
+ * @deprecated
  */
 class RsponseReturnException extends \Exception
 {
@@ -47,17 +48,21 @@ abstract class Controller
     }
 
     /**
+     * @var array
      * @deprecated
      */
-    public $request;
+    public ?array $request = null;
     public function __construct()
     {
-        $this->request = [
-            'params' => $_REQUEST,
-            'uri' => explode('?', trim($_SERVER['REQUEST_URI'], '?'))[0],
-            'method' => $this->method = $_SERVER['REQUEST_METHOD'],
-            'body' => json_decode(file_get_contents('php://input'), true),
-        ];
+        // Deprecated !!!
+        if (isset($_SERVER['REQUEST_URI'])) {
+            $this->request = [
+                'params' => $_REQUEST,
+                'uri' => explode('?', trim($_SERVER['REQUEST_URI'], '?'))[0],
+                'method' => $_SERVER['REQUEST_METHOD'],
+                'body' => json_decode(file_get_contents('php://input'), true),
+            ];
+        }
     }
 
     /**
