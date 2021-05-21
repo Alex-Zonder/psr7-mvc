@@ -12,26 +12,43 @@ $map = $routerContainer->getMap();
 // add a route to the map, and a handler for it
 require 'app/routes.php';
 
+$router = new \Core\Http\Router\AuraRouterAdapter($routerContainer);
+$resolver = new \Core\Http\ActionResolver;
 
 ### Running ###
 $request = Zend\Diactoros\ServerRequestFactory::fromGlobals();
 
-$matcher = $routerContainer->getMatcher();
-$route = $matcher->match($request);
-if (! $route) {
-    echo "No route found for the request.";
-    exit;
+try {
+    $result = $router->match($request);
+    foreach ($result->getAttributes() as $key => $val) {
+        $request = $request->withAttribute($key, $val);
+    }
+    // $response = Controllers\Controller::dispatch($request, $result->getHandler());
+    $action = $resolver->resolve($result->getHandler());
+    $response = $action($request);
+} catch (\Core\Http\Router\Exception\RequestNotMatchedException $e) {
+    $handler = new \Core\Http\Middleware\NotFoundHandler();
+    $response = $handler($request);
+} catch (\Controllers\RsponseReturnException $e) {
+    $response = $e->response;
 }
 
-// add route attributes to the request
-foreach ($route->attributes as $key => $val) {
-    $request = $request->withAttribute($key, $val);
-}
+// $matcher = $routerContainer->getMatcher();
+// $route = $matcher->match($request);
+// if (! $route) {
+//     echo "No route found for the request.";
+//     exit;
+// }
 
-// dispatch the request to the route handler.
-// (consider using https://github.com/auraphp/Aura.Dispatcher
-// in place of the one callable below.)
-$response = Controllers\Controller::dispatch($request, $route->handler);
+// // add route attributes to the request
+// foreach ($route->attributes as $key => $val) {
+//     $request = $request->withAttribute($key, $val);
+// }
+
+// // dispatch the request to the route handler.
+// // (consider using https://github.com/auraphp/Aura.Dispatcher
+// // in place of the one callable below.)
+// $response = Controllers\Controller::dispatch($request, $route->handler);
 
 
 ### Postprocessing ###
