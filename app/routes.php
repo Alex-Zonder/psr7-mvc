@@ -54,8 +54,5 @@ $map->get('pipe', '/pipe', function ($request) {
         return new HtmlResponse('Pipe. User: '.$request->getAttribute(\Core\Http\Middleware\BasicAuthMiddleware::ATTRIBUTE));
     });
 
-    // return $pipeline($request, function () {
-    //     return new HtmlResponse('Undefined page', 404);
-    // });
     return $pipeline($request, new \Core\Http\Middleware\NotFoundHandler());
 });

@@ -4,8 +4,6 @@ require 'vendor/autoload.php';
 
 
 ### Initialization ###
-
-// create the router container and get the routing map
 $routerContainer = new Aura\Router\RouterContainer();
 $map = $routerContainer->getMap();
 
@@ -23,7 +21,6 @@ try {
     foreach ($result->getAttributes() as $key => $val) {
         $request = $request->withAttribute($key, $val);
     }
-    // $response = Controllers\Controller::dispatch($request, $result->getHandler());
     $action = $resolver->resolve($result->getHandler());
     $response = $action($request);
 } catch (\Core\Http\Router\Exception\RequestNotMatchedException $e) {
@@ -32,23 +29,6 @@ try {
 } catch (\Controllers\RsponseReturnException $e) {
     $response = $e->response;
 }
-
-// $matcher = $routerContainer->getMatcher();
-// $route = $matcher->match($request);
-// if (! $route) {
-//     echo "No route found for the request.";
-//     exit;
-// }
-
-// // add route attributes to the request
-// foreach ($route->attributes as $key => $val) {
-//     $request = $request->withAttribute($key, $val);
-// }
-
-// // dispatch the request to the route handler.
-// // (consider using https://github.com/auraphp/Aura.Dispatcher
-// // in place of the one callable below.)
-// $response = Controllers\Controller::dispatch($request, $route->handler);
 
 
 ### Postprocessing ###

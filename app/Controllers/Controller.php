@@ -23,31 +23,6 @@ class RsponseReturnException extends \Exception
 abstract class Controller
 {
     /**
-     * Отправить запрос обработчику маршрута
-     */
-    public static function dispatch(ServerRequestInterface $request, $handler): ResponseInterface
-    {
-        if (is_array($handler)) {
-            if (! class_exists($handler[0])) {
-                return new JsonResponse("No controller: " . $handler[0]);
-            }
-            $controller = new $handler[0]();
-            $action = $handler[1];
-            if (! method_exists($controller, $action)) {
-                return new JsonResponse("No action: " . $action);
-            }
-            try {
-                return $controller->$action($request);
-            } catch(RsponseReturnException $e) {
-                return $e->response;
-            }
-        } else {
-            $callable = $handler;
-            return $callable($request);
-        }
-    }
-
-    /**
      * @var array
      * @deprecated
      */
